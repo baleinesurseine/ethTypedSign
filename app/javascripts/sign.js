@@ -54,7 +54,7 @@ function typedSign(coinbase, value, cb) {
 }
 
 function typedSignDb(coinbase, value, msg, cb) {
-  const data = [{ 'type': 'uint', 'name': 'message', 'value': value }, { 'type': 'string', 'name': 'text', 'value': msg }];
+  const data = [{ 'type': 'string', 'name': 'Message', 'value': msg }, { 'type': 'uint', 'name': 'Amount', 'value': value }];
   web3.currentProvider.sendAsync({method: 'eth_signTypedData', params: [data, coinbase], jsonrpc: '2.0', id: 1}, function(err,res) {
     var sig = res.result;
     sig = sig.substr(2, sig.length);
@@ -92,7 +92,7 @@ window.App = {
 
       self.runSign('Edouard FISCHER : send 123€');
       self.runTypedSign(123);
-      self.runTypedSignDb(451, 'Edouard');
+      self.runTypedSignDb(1200, 'By signing, I commit to send this amount (€) :');
 
     });
   },
@@ -166,8 +166,8 @@ window.App = {
       // console.log('v: ', v);
 
       CheckSign.deployed().then(function(instance) {
-        var val = typedData[0].value;
-        var msg = typedData[1].value;
+        var val = typedData[1].value;
+        var msg = typedData[0].value;
 
         return instance.recoverTypedSignAddrDb.call(val, msg, v, r, s);
       }).then(function(data) {
