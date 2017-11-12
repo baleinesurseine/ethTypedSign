@@ -53,6 +53,22 @@ function typedSign(coinbase, value, cb) {
   });
 }
 
+function typedSignDb(coinbase, value, msg, cb) {
+  const data = [{ 'type': 'uint', 'name': 'message', 'value': value }, { 'type': 'string', 'name': 'text', 'value': msg }];
+  web3.currentProvider.sendAsync({method: 'eth_signTypedData', params: [data, coinbase], jsonrpc: '2.0', id: 1}, function(err,res) {
+    var sig = res.result;
+    sig = sig.substr(2, sig.length);
+    let r = '0x' + sig.substr(0, 64);
+    let s = '0x' + sig.substr(64, 64);
+    let v = parseInt(sig.substr(128, 2),16); // no need to add 27 here
+    var res = {}
+    res.r =r;
+    res.s = s;
+    res.v = v;
+    cb(data, res);
+  });
+}
+
 window.App = {
   start: function() {
     var self = this;
@@ -76,6 +92,8 @@ window.App = {
 
       self.runSign('Edouard FISCHER : send 123€');
       self.runTypedSign(123);
+      self.runTypedSignDb(451, 'Edouard');
+
     });
   },
 
@@ -85,6 +103,16 @@ window.App = {
     typedSign(account, value, function(typedData, sig) {
       self.checkTypedSign(typedData, sig, function(result) {
         console.log("Check typed sign:", result);
+      })
+    })
+  },
+
+  runTypedSignDb: function(value, msg) {
+    var self = this;
+    console.log('---runTypedSignDb---');
+    typedSignDb(account, value, msg, function(typedData, sig) {
+      self.checkTypedSignDb(typedData, sig, function(result) {
+        console.log("Check typed sign DB:", result);
       })
     })
   },
@@ -125,6 +153,30 @@ window.App = {
     })
 
     },
+
+    checkTypedSignDb: function(typedData, signature, cb) {
+      console.log("---checkTypedSignDB---");
+      // console.log("TypedData:", typedData);
+      var r = signature.r;
+      var s = signature.s;
+      var v = signature.v;
+      // console.log("Signature:")
+      // console.log('r: ', r);
+      // console.log('s: ', s);
+      // console.log('v: ', v);
+
+      CheckSign.deployed().then(function(instance) {
+        var val = typedData[0].value;
+        var msg = typedData[1].value;
+
+        return instance.recoverTypedSignAddrDb.call(val, msg, v, r, s);
+      }).then(function(data) {
+        console.log("RecoverTypedSign address:", data);
+      }).catch(function(err) {
+        console.log('Got error:', err)
+      })
+
+      },
 
 
     checkSign: function(sha, signature, cb) {
