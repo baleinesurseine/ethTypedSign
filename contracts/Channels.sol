@@ -2,6 +2,7 @@ pragma solidity ^0.4.11;
 
 import './SafeMath.sol';
 
+
 contract Channels {
   address public owner;
   // deposits hold the total values used in payment channels
@@ -27,8 +28,8 @@ contract Channels {
   uint id;
 
   event LogNewChannel(address indexed owner, bytes32 channel);
-  event LogDeposit(address indexed owner, bytes32 indexed channel);
-  event LogClaim(address indexed who, bytes32 indexed channel);
+  event LogDeposit(address indexed owner, bytes32 indexed channel, uint value);
+  event LogClaim(address indexed who, bytes32 indexed channel, uint value);
   event LogReclaim(bytes32 indexed channel);
 
   function Channels() public {
@@ -49,25 +50,26 @@ contract Channels {
     require(this.balance > deposits);
     assert(owner.send(this.balance - deposits));
   }
-
+  // Only the sender can create a channel, by sending ether. Upon creation, the receiver is unknown
   function createChannel() public payable {
-    bytes32 channel = keccak256(id++, owner);
+    bytes32 channel = keccak256(id++, owner, msg.sender);
     channels[channel] = PaymentChannel(msg.sender, msg.value, block.timestamp + 1 days, true);
     deposits += msg.value;
     LogNewChannel(msg.sender, channel);
   }
 
-  function getHash(bytes32 channel, address recipient, uint value) public pure returns(bytes32) {
-    return keccak256(channel, recipient, value);
+  function getHash(bytes32 channel, address recipient, uint value) private pure returns(bytes32) {
+    var h1 = keccak256('string Order', 'bytes32 Channel', 'address To', 'uint Amount');
+    var h2 = keccak256('Transfer amount', channel, recipient, value);
+    return keccak256(h1, h2);
   }
 
   function verify(bytes32 channel, address recipient, uint value, uint8 v, bytes32 r, bytes32 s) constant public returns(bool) {
     PaymentChannel memory ch = channels[channel];
-    //return ch.valid && ch.validUntil > block.timestamp && ch.owner == ecrecover(getHash(channel, recipient, value), v, r, s);
-    return ch.owner == ecrecover(getHash(channel, recipient, value), v, r, s);
+    return ch.valid && ch.validUntil >= now && ch.owner == ecrecover(getHash(channel, recipient, value), v, r, s);
   }
 
-  function claim(bytes32 channel, uint value, uint8 v, bytes32 r, bytes32 s) public {
+  function claim(bytes32 channel, uint value, uint8 v, bytes32 r, bytes32 s) public returns(bool) {
     address recipient = msg.sender;
     require(verify(channel, recipient, value, v, r, s));
     PaymentChannel memory ch = channels[channel];
@@ -85,8 +87,8 @@ contract Channels {
 
       withdraws[channel] = PaymentWithdraw(recipient, claimable);
 
-      assert(ch.value + claimable == total);
-      LogClaim(recipient, channel);
+      require(ch.value + claimable == total);
+      LogClaim(recipient, channel, value);
     }
 
     function deposit(bytes32 channel) public payable {
@@ -94,7 +96,7 @@ contract Channels {
       PaymentChannel memory ch = channels[channel];
       ch.value += msg.value;
       deposits += msg.value;
-      LogDeposit(msg.sender, channel);
+      LogDeposit(msg.sender, channel, msg.value);
     }
 
     function recipientReclaim(bytes32 channel) public {
@@ -103,7 +105,7 @@ contract Channels {
       require(withdraw.claimable != 0);
       require(this.balance >= withdraw.claimable);
       deposits -= withdraw.claimable;
-      assert(withdraw.recipient.send(withdraw.claimable));
+      require(withdraw.recipient.send(withdraw.claimable));
       delete withdraws[channel];
     }
 
@@ -111,10 +113,10 @@ contract Channels {
       PaymentChannel memory ch = channels[channel];
       require(msg.sender == ch.owner);
       require(ch.value != 0);
-      require(ch.validUntil < block.timestamp);
+      require(ch.validUntil < now);
       require(this.balance >= ch.value);
       deposits -= ch.value;
-      assert(ch.owner.send(ch.value));
+      require(ch.owner.send(ch.value));
       delete channels[channel];
     }
 
@@ -131,6 +133,6 @@ contract Channels {
     }
     function isValidChannel(bytes32 channel) constant public returns(bool) {
       PaymentChannel memory ch = channels[channel];
-      return ch.valid && ch.validUntil >= block.timestamp;
+      return ch.valid && ch.validUntil >= now;
     }
   }
