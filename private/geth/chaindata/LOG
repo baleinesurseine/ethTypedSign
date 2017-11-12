@@ -1,0 +1,72 @@
+=============== Nov 9, 2017 (CET) ===============
+22:26:52.090322 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+22:26:52.090822 db@open opening
+22:26:52.092903 version@stat F·[] S·0B[] Sc·[]
+22:26:52.093284 db@janitor F·2 G·0
+22:26:52.093307 db@open done T·2.467223ms
+=============== Nov 9, 2017 (CET) ===============
+22:29:12.974330 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+22:29:12.974476 version@stat F·[] S·0B[] Sc·[]
+22:29:12.974488 db@open opening
+22:29:12.974529 journal@recovery F·1
+22:29:12.975347 journal@recovery recovering @1
+22:29:13.036212 memdb@flush created L0@2 N·21261 S·1MiB "\x00\x00\xae..\x82\x88\x11,v9390":"\xff\xfc\x94..\xa5\x05\xa1,v9519"
+22:29:13.037912 version@stat F·[1] S·1MiB[1MiB] Sc·[0.25]
+22:29:13.038997 db@janitor F·3 G·0
+22:29:13.039025 db@open done T·64.520941ms
+22:29:17.833540 db@close closing
+22:29:17.833841 db@close done T·297.588µs
+=============== Nov 9, 2017 (CET) ===============
+22:33:24.377051 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+22:33:24.377211 version@stat F·[1] S·1MiB[1MiB] Sc·[0.25]
+22:33:24.377224 db@open opening
+22:33:24.377272 journal@recovery F·1
+22:33:24.377988 journal@recovery recovering @3
+22:33:24.378534 memdb@flush created L0@5 N·3 S·481B "Blo..ion,v21264":"eth..ˏ\xa3,v21263"
+22:33:24.379354 version@stat F·[2] S·1MiB[1MiB] Sc·[0.50]
+22:33:24.380425 db@janitor F·4 G·0
+22:33:24.380442 db@open done T·3.211997ms
+22:33:28.476586 db@close closing
+22:33:28.476920 db@close done T·331.159µs
+=============== Nov 9, 2017 (CET) ===============
+22:33:32.466208 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+22:33:32.466396 version@stat F·[2] S·1MiB[1MiB] Sc·[0.50]
+22:33:32.466411 db@open opening
+22:33:32.466470 journal@recovery F·1
+22:33:32.467242 journal@recovery recovering @6
+22:33:32.469452 memdb@flush created L0@8 N·3 S·481B "Blo..ion,v21268":"eth..ˏ\xa3,v21267"
+22:33:32.470577 version@stat F·[3] S·1MiB[1MiB] Sc·[0.75]
+22:33:32.471711 db@janitor F·5 G·0
+22:33:32.471740 db@open done T·5.315907ms
+=============== Nov 9, 2017 (CET) ===============
+22:34:03.270238 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+22:34:03.270445 version@stat F·[3] S·1MiB[1MiB] Sc·[0.75]
+22:34:03.270460 db@open opening
+22:34:03.270520 journal@recovery F·1
+22:34:03.271294 journal@recovery recovering @9
+22:34:03.273675 memdb@flush created L0@11 N·3 S·481B "Blo..ion,v21272":"eth..ˏ\xa3,v21271"
+22:34:03.274942 version@stat F·[4] S·1MiB[1MiB] Sc·[1.00]
+22:34:03.276093 db@janitor F·6 G·0
+22:34:03.276114 db@open done T·5.646919ms
+22:34:03.276234 table@compaction L0·4 -> L1·0 S·1MiB Q·21274
+22:34:03.300104 table@build created L1@14 N·21260 S·1MiB "\x00\x00\xae..\x82\x88\x11,v9390":"\xff\xfc\x94..\xa5\x05\xa1,v9519"
+22:34:03.300160 version@stat F·[0 1] S·1MiB[0B 1MiB] Sc·[0.00 0.02]
+22:34:03.300276 table@compaction committed F-3 S-1KiB Ke·0 D·10 T·23.95762ms
+22:34:03.300393 table@remove removed @11
+22:34:03.300488 table@remove removed @8
+22:34:03.300569 table@remove removed @5
+22:34:03.300797 table@remove removed @2
+22:40:24.289081 db@close closing
+22:40:24.289213 db@close done T·130.383µs
+=============== Nov 9, 2017 (CET) ===============
+22:42:13.650158 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+22:42:13.650391 version@stat F·[0 1] S·1MiB[0B 1MiB] Sc·[0.00 0.02]
+22:42:13.650404 db@open opening
+22:42:13.650448 journal@recovery F·1
+22:42:13.651288 journal@recovery recovering @12
+22:42:13.651942 memdb@flush created L0@15 N·3 S·481B "Blo..ion,v21276":"eth..ˏ\xa3,v21275"
+22:42:13.652755 version@stat F·[1 1] S·1MiB[481B 1MiB] Sc·[0.25 0.02]
+22:42:13.653602 db@janitor F·4 G·0
+22:42:13.653628 db@open done T·3.218365ms
+22:45:19.868317 db@close closing
+22:45:19.874122 db@close done T·5.793826ms

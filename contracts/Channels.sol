@@ -1,0 +1,136 @@
+pragma solidity ^0.4.11;
+
+import './SafeMath.sol';
+
+contract Channels {
+  address public owner;
+  // deposits hold the total values used in payment channels
+  uint256 public deposits;
+
+  using SafeMath for uint256;
+
+  struct PaymentChannel {
+    address owner;
+    uint256 value;
+    uint validUntil;
+    bool valid;
+  }
+
+  // Channels uses asynchronous withdrawing for the recipients.
+  struct PaymentWithdraw {
+    address recipient;
+    uint256 claimable;
+  }
+
+  mapping(bytes32 => PaymentChannel) public channels;
+  mapping(bytes32 => PaymentWithdraw) public withdraws;
+  uint id;
+
+  event LogNewChannel(address indexed owner, bytes32 channel);
+  event LogDeposit(address indexed owner, bytes32 indexed channel);
+  event LogClaim(address indexed who, bytes32 indexed channel);
+  event LogReclaim(bytes32 indexed channel);
+
+  function Channels() public {
+    owner = msg.sender;
+    id = 0;
+  }
+
+  function transferOwnership(address _to) public {
+    require(msg.sender == owner);
+    require(_to != address(0));
+    owner = _to;
+  }
+
+  // Channels can not receive Ether by transactions or send, but can get some by mining or selfdestruct. The owner can get it back.
+  function withdrawExtra() public {
+    require(msg.sender == owner);
+    // owner can not get the deposits back
+    require(this.balance > deposits);
+    assert(owner.send(this.balance - deposits));
+  }
+
+  function createChannel() public payable {
+    bytes32 channel = keccak256(id++, owner);
+    channels[channel] = PaymentChannel(msg.sender, msg.value, block.timestamp + 1 days, true);
+    deposits += msg.value;
+    LogNewChannel(msg.sender, channel);
+  }
+
+  function getHash(bytes32 channel, address recipient, uint value) public pure returns(bytes32) {
+    return keccak256(channel, recipient, value);
+  }
+
+  function verify(bytes32 channel, address recipient, uint value, uint8 v, bytes32 r, bytes32 s) constant public returns(bool) {
+    PaymentChannel memory ch = channels[channel];
+    //return ch.valid && ch.validUntil > block.timestamp && ch.owner == ecrecover(getHash(channel, recipient, value), v, r, s);
+    return ch.owner == ecrecover(getHash(channel, recipient, value), v, r, s);
+  }
+
+  function claim(bytes32 channel, uint value, uint8 v, bytes32 r, bytes32 s) public {
+    address recipient = msg.sender;
+    require(verify(channel, recipient, value, v, r, s));
+    PaymentChannel memory ch = channels[channel];
+    uint256 total = ch.value;
+    uint256 claimable = 0;
+
+    if (value > ch.value) {
+      claimable = ch.value;
+      ch.value = 0;
+      } else {
+        claimable = value;
+        ch.value -= value;
+      }
+      ch.valid = false;
+
+      withdraws[channel] = PaymentWithdraw(recipient, claimable);
+
+      assert(ch.value + claimable == total);
+      LogClaim(recipient, channel);
+    }
+
+    function deposit(bytes32 channel) public payable {
+      require(isValidChannel(channel));
+      PaymentChannel memory ch = channels[channel];
+      ch.value += msg.value;
+      deposits += msg.value;
+      LogDeposit(msg.sender, channel);
+    }
+
+    function recipientReclaim(bytes32 channel) public {
+      PaymentWithdraw memory withdraw = withdraws[channel];
+      require(msg.sender == withdraw.recipient);
+      require(withdraw.claimable != 0);
+      require(this.balance >= withdraw.claimable);
+      deposits -= withdraw.claimable;
+      assert(withdraw.recipient.send(withdraw.claimable));
+      delete withdraws[channel];
+    }
+
+    function channelOwnerReclaim(bytes32 channel) public {
+      PaymentChannel memory ch = channels[channel];
+      require(msg.sender == ch.owner);
+      require(ch.value != 0);
+      require(ch.validUntil < block.timestamp);
+      require(this.balance >= ch.value);
+      deposits -= ch.value;
+      assert(ch.owner.send(ch.value));
+      delete channels[channel];
+    }
+
+    function getChannelValue(bytes32 channel) constant public returns(uint256) {
+      return channels[channel].value;
+    }
+
+    function getChannelOwner(bytes32 channel) constant public returns(address) {
+      return channels[channel].owner;
+    }
+
+    function  getChannelValidUntil(bytes32 channel) constant public returns(uint) {
+      return channels[channel].validUntil;
+    }
+    function isValidChannel(bytes32 channel) constant public returns(bool) {
+      PaymentChannel memory ch = channels[channel];
+      return ch.valid && ch.validUntil >= block.timestamp;
+    }
+  }
