@@ -48,7 +48,7 @@ contract Channels {
     require(msg.sender == owner);
     // owner can not get the deposits back
     require(this.balance > deposits);
-    assert(owner.send(this.balance - deposits));
+    require(owner.send(this.balance - deposits));
   }
   // Only the sender can create a channel, by sending ether. Upon creation, the receiver is unknown
   function createChannel(uint duration) public payable {
