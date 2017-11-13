@@ -27,7 +27,7 @@ contract Channels {
   mapping(bytes32 => PaymentWithdraw) public withdraws;
   uint id;
 
-  event LogNewChannel(address indexed owner, bytes32 channel);
+  event LogNewChannel(address indexed owner, bytes32 indexed channel, uint validUntil);
   event LogDeposit(address indexed owner, bytes32 indexed channel, uint value);
   event LogClaim(address indexed who, bytes32 indexed channel, uint value);
   event LogReclaim(bytes32 indexed channel);
@@ -51,11 +51,12 @@ contract Channels {
     assert(owner.send(this.balance - deposits));
   }
   // Only the sender can create a channel, by sending ether. Upon creation, the receiver is unknown
-  function createChannel() public payable {
+  function createChannel(uint duration) public payable {
     bytes32 channel = keccak256(id++, owner, msg.sender);
-    channels[channel] = PaymentChannel(msg.sender, msg.value, block.timestamp + 1 days, true);
+    channels[channel] = PaymentChannel(msg.sender, msg.value, now + duration * 1 days, true);
     deposits += msg.value;
-    LogNewChannel(msg.sender, channel);
+    LogNewChannel(msg.sender, channel, now + duration * 1 days);
+    LogDeposit(msg.sender, channel, msg.value);
   }
 
   function getHash(bytes32 channel, address recipient, uint value) private pure returns(bytes32) {
@@ -96,7 +97,7 @@ contract Channels {
       PaymentChannel memory ch = channels[channel];
       ch.value += msg.value;
       deposits += msg.value;
-      LogDeposit(msg.sender, channel, msg.value);
+      LogDeposit(msg.sender, channel, ch.value);
     }
 
     function recipientReclaim(bytes32 channel) public {
