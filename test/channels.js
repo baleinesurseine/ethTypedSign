@@ -11,7 +11,7 @@ contract('Channels', function(accounts) {
 
     return Channels.deployed().then(function(instance) {
       channels = instance;
-      return channels.createChannel({}, { from: account_one, value: 10 });
+      return channels.createChannel(3, { from: account_one, value: 10 });
     }).then(function(result) {
       var evt = result.logs[0].event;
       var args = result.logs[0].args;

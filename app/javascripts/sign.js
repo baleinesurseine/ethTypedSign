@@ -82,7 +82,7 @@ window.App = {
       //self.getLit();
       self.runSign('Edouard FISCHER : send 123€');
       self.runTypedSign(123);
-      self.runTypedSignDb(1200, 'By signing, I commit to send this amount (€) :');
+      self.runTypedSignDb(1200, 'By signing, I commit to send this amount (€)');
     });
   },
 
