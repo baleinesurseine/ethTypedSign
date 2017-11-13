@@ -79,10 +79,20 @@ window.App = {
       accounts = accs;
       account = accounts[0];
 
+      //self.getLit();
       self.runSign('Edouard FISCHER : send 123€');
       self.runTypedSign(123);
       self.runTypedSignDb(1200, 'By signing, I commit to send this amount (€) :');
     });
+  },
+
+  getLit: function() {
+    var self = this;
+    CheckSign.deployed().then(function(instance) {
+      return instance.getLit.call();
+    }).then(function(val) {
+      console.log("literal:", val);
+    })
   },
 
   runTypedSign: function(value) {
