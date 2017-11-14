@@ -74,21 +74,17 @@ contract Channels {
     address recipient = msg.sender;
     require(verify(channel, recipient, value, v, r, s));
     PaymentChannel memory ch = channels[channel];
-    uint256 total = ch.value;
     uint256 claimable = 0;
 
     if (value > ch.value) {
       claimable = ch.value;
-      ch.value = 0;
       } else {
         claimable = value;
-        ch.value -= value;
       }
+      ch.value -= claimable;
       ch.valid = false;
 
       withdraws[channel] = PaymentWithdraw(recipient, claimable);
-
-      require(ch.value + claimable == total);
       LogClaim(recipient, channel, value);
     }
 
