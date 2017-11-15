@@ -28,13 +28,16 @@ function convertSig(signature) {
 
 function signString(coinbase, text, cb) {
   /*
-  * Sign a string and return (hash, v, r, s) used by ecrecover to regenerate the coinbase address;
+  * Sign a string and return a signature (r, s, v) used by ecrecover to regenerate the coinbase address;
   */
   let sha = web3.sha3(text); // is already 'Ox.....', no need to add 'Ox' upfront
   web3.eth.sign(coinbase, sha, (err, sig) => {cb(sha, convertSig(sig))});
 }
 
 function signTypedData(coinbase, data, cb) {
+  /*
+  * Sign a typed data and return a signature (r, s, v)
+  */
   web3.currentProvider.sendAsync({method: 'eth_signTypedData',
   params: [data, coinbase],
   jsonrpc: '2.0',
@@ -76,51 +79,70 @@ window.App = {
 
       console.log("Account:", account);
 
+      document.getElementById("account").innerText = account;
       //self.getLit();
-      self.runSign('Edouard FISCHER : send 123€');
-      self.runTypedSign(123);
-      self.runTypedSignDb(1200, 'By signing, I commit to send this amount (€)');
     });
-  },
 
-  getLit: function() {
-    var self = this;
-    CheckSign.deployed().then(instance => {
-      return instance.getLit.call();
-    }).then(val => { console.log("literal:", val);})
-  },
-
-  runTypedSign: function(value) {
-    var self = this;
-    console.log('---runTypedSign---');
-    typedSign(account, value, (typedData, sig) => {
-      self.checkTypedSign(typedData, sig, result => {
-        console.log("Check typed sign:", result);
+    // polling of the accounts
+    var accountInterval = setInterval(function() {
+      web3.eth.getAccounts((err, accs) => {
+        if (accs[0] != account) {
+          accounts = accs;
+          account = accounts[0];
+          document.getElementById("account").innerText = account;
+        }
       })
-    })
+
+    }, 100);
   },
 
-  runTypedSignDb: function(value, msg) {
+  simpleSign: function() {
+    document.getElementById("resSimple").innerText = "wait...";
     var self = this;
-    console.log('---runTypedSignDb---');
-    typedSignDb(account, value, msg, (typedData, sig) => {
-      self.checkTypedSignDb(typedData, sig, result => {
-        console.log("Check typed sign Db:", result);
-      })
-    })
-  },
-
-  // sign hashed value with local metamask plugin
-  runSign: function(msg) {
-    var self = this;
-    console.log("---runSign---");
+    var msg = 'Edouard FISCHER : send 123€';
     signString(account, msg, (sha, sig) => {
       self.checkSign(sha, sig,
-        result => {console.log('Is signed with account:', result)})
+        result => {
+          console.log('Is signed with account:', result);
+          document.getElementById("resSimple").innerText = result;
+        })
       })
     },
 
+    singleSign: function() {
+      document.getElementById("resSingle").innerText = "wait...";
+      var self = this;
+      typedSign(account, 123, (typedData, sig) => {
+        self.checkTypedSign(typedData, sig, result => {
+          console.log("Check typed sign single:", result);
+          document.getElementById("resSingle").innerText = result;
+        })
+      })
+    },
+
+    doubleSign: function() {
+      document.getElementById("resDouble").innerText = "wait...";
+      var self = this;
+      typedSignDb(account, 1200, 'By signing, I commit to send this amount (€)', (typedData, sig) => {
+        self.checkTypedSignDb(typedData, sig, result => {
+          console.log("Check typed sign double:", result);
+          document.getElementById("resDouble").innerText = result;
+        })
+      })
+    },
+
+    getLit: function() {
+      var self = this;
+      CheckSign.deployed().then(instance => {
+        return instance.getLit.call();
+      }).then(val => { console.log("literal:", val);})
+    },
+
+
     checkTypedSign: function(typedData, sig, cb) {
+      /*
+      * Ask CheckSign smart contract to recover coinbase address from typed data hash and signature
+      */
       console.log("---checkTypedSign---");
       CheckSign.deployed().then(instance => {
         let val = typedData[0].value;
@@ -130,6 +152,9 @@ window.App = {
     },
 
     checkTypedSignDb: function(typedData, sig, cb) {
+      /*
+      * Ask CheckSign smart contract to recover coinbase address from typed data hash and signature
+      */
       console.log("---checkTypedSignDB---");
       CheckSign.deployed().then(instance => {
         let val = typedData[1].value;
@@ -139,9 +164,12 @@ window.App = {
     },
 
     checkSign: function(sha, sig, cb) {
+      /*
+      * Ask CheckSign smart contract to recover coinbase address from sha and signature
+      */
       console.log("---checkSign---");
       CheckSign.deployed().then(instance => {
-        return instance.isSigned.call(account, sha, sig.v, sig.r, sig.s)
+        return instance.recoverAddr.call(sha, sig.v, sig.r, sig.s)
       }).then(cb).catch(err => {console.log('got error:', err)})
     }
 
