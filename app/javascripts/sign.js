@@ -14,16 +14,10 @@ var CheckSign = contract(checksign_artifacts);
 var accounts;
 var account;
 
-function convertSig(signature) {
-  let sig = signature.substr(2, signature.length);
-  let r = '0x' + sig.substr(0, 64);
-  let s = '0x' + sig.substr(64, 64);
-  let v = parseInt(sig.substr(128, 2),16); // no need to add 27 here
-  var res = {}
-  res.r =r;
-  res.s = s;
-  res.v = v;
-  return res;
+var convertSig = sig => {
+  return {r: '0x' + sig.substr(2, 64),
+          s: '0x' + sig.substr(66, 64),
+          v: parseInt(sig.substr(130, 2),16)}
 }
 
 function signString(coinbase, text, cb) {
@@ -61,7 +55,6 @@ function typedSignDb(coinbase, value, msg, cb) {
 
 window.App = {
   start: function() {
-    var self = this;
     // Bootstrap the CheckSign abstraction for Use.
     CheckSign.setProvider(web3.currentProvider);
     web3.eth.getAccounts((err, accs) => {
@@ -74,17 +67,11 @@ window.App = {
         return;
       }
 
-      accounts = accs;
-      account = accounts[0];
-
-      console.log("Account:", account);
-
-      document.getElementById("account").innerText = account;
       //self.getLit();
     });
 
-    // polling of the accounts
-    var accountInterval = setInterval(function() {
+    // polling for change of account
+    setInterval(() => {
       web3.eth.getAccounts((err, accs) => {
         if (accs[0] != account) {
           accounts = accs;
@@ -92,15 +79,15 @@ window.App = {
           document.getElementById("account").innerText = account;
         }
       })
-
     }, 100);
   },
 
   simpleSign: function() {
     document.getElementById("resSimple").innerText = "wait...";
     var self = this;
-    var msg = 'Edouard FISCHER : send 123€';
+    var msg = 'Edouard FISCHER : send € 123.00';
     signString(account, msg, (sha, sig) => {
+      document.getElementById("resSimple").innerText = "checking...";
       self.checkSign(sha, sig,
         result => {
           console.log('Is signed with account:', result);
@@ -113,8 +100,9 @@ window.App = {
       document.getElementById("resSingle").innerText = "wait...";
       var self = this;
       typedSign(account, 123, (typedData, sig) => {
+        document.getElementById("resSingle").innerText = "checking...";
         self.checkTypedSign(typedData, sig, result => {
-          console.log("Check typed sign single:", result);
+          console.log("Is signed with account:", result);
           document.getElementById("resSingle").innerText = result;
         })
       })
@@ -124,15 +112,15 @@ window.App = {
       document.getElementById("resDouble").innerText = "wait...";
       var self = this;
       typedSignDb(account, 1200, 'By signing, I commit to send this amount (€)', (typedData, sig) => {
+        document.getElementById("resDouble").innerText = "checking...";
         self.checkTypedSignDb(typedData, sig, result => {
-          console.log("Check typed sign double:", result);
+          console.log("Is signed with account:", result);
           document.getElementById("resDouble").innerText = result;
         })
       })
     },
 
     getLit: function() {
-      var self = this;
       CheckSign.deployed().then(instance => {
         return instance.getLit.call();
       }).then(val => { console.log("literal:", val);})
