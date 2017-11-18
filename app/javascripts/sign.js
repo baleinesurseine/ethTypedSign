@@ -13,11 +13,12 @@ var CheckSign = contract(checksign_artifacts);
 
 var accounts;
 var account;
+var gasPrice;
 
 var convertSig = sig => {
   return {r: '0x' + sig.substr(2, 64),
-          s: '0x' + sig.substr(66, 64),
-          v: parseInt(sig.substr(130, 2),16)}
+  s: '0x' + sig.substr(66, 64),
+  v: parseInt(sig.substr(130, 2),16)}
 }
 
 function signString(coinbase, text, cb) {
@@ -70,6 +71,12 @@ window.App = {
       //self.getLit();
     });
 
+    // get gas price
+    web3.eth.getGasPrice(function(err, price){
+      console.log("Gas price:", Number(price))
+      gasPrice = price;
+    })
+
     // polling for change of account
     setInterval(() => {
       web3.eth.getAccounts((err, accs) => {
@@ -77,8 +84,15 @@ window.App = {
           accounts = accs;
           account = accounts[0];
           document.getElementById("account").innerText = account;
+
+          web3.eth.getBalance(account, (err, bal) => {
+            document.getElementById("balance").innerText = web3.fromWei(bal, 'ether');
+          })
+
         }
-      })
+      });
+
+
     }, 100);
   },
 
@@ -132,9 +146,18 @@ window.App = {
       * Ask CheckSign smart contract to recover coinbase address from typed data hash and signature
       */
       console.log("---checkTypedSign---");
+      var inst;
+      var val;
       CheckSign.deployed().then(instance => {
-        let val = typedData[0].value;
-        return instance.recoverTypedSignAddr.call(val, sig.v, sig.r, sig.s);
+        inst = instance;
+        val = typedData[0].value;
+
+        return inst.recoverTypedSignAddr.estimateGas(val, sig.v, sig.r, sig.s);
+      }).then(result => {
+        console.log("Gas cost:", web3.fromWei(result * gasPrice, 'ether'), ' ether');
+        console.log("Gas cost:", 300 * web3.fromWei(result * gasPrice, 'ether'), ' €');
+
+        return inst.recoverTypedSignAddr.call(val, sig.v, sig.r, sig.s);
       }).then(cb).catch(err => {console.log('Got error:', err)})
 
     },
@@ -144,10 +167,20 @@ window.App = {
       * Ask CheckSign smart contract to recover coinbase address from typed data hash and signature
       */
       console.log("---checkTypedSignDB---");
+      var inst;
+      var val;
+      var msg;
       CheckSign.deployed().then(instance => {
-        let val = typedData[1].value;
-        let msg = typedData[0].value;
-        return instance.recoverTypedSignAddrDb.call(val, msg, sig.v, sig.r, sig.s);
+        inst = instance;
+        val = typedData[1].value;
+        msg = typedData[0].value;
+        return inst.recoverTypedSignAddrDb.estimateGas(val, msg, sig.v, sig.r, sig.s);
+      }).then(result => {
+        console.log("Gas cost:", web3.fromWei(result * gasPrice, 'ether'), ' ether');
+        console.log("Gas cost:", 300 * web3.fromWei(result * gasPrice, 'ether'), ' €');
+
+        return inst.recoverTypedSignAddrDb.call(val, msg, sig.v, sig.r, sig.s);
+
       }).then(cb).catch(err => {console.log('Got error:', err)})
     },
 
@@ -156,8 +189,14 @@ window.App = {
       * Ask CheckSign smart contract to recover coinbase address from sha and signature
       */
       console.log("---checkSign---");
+      var inst;
       CheckSign.deployed().then(instance => {
-        return instance.recoverAddr.call(sha, sig.v, sig.r, sig.s)
+        inst = instance;
+        return  inst.recoverAddr.estimateGas(sha, sig.v, sig.r, sig.s)
+      }).then(result => {
+        console.log("Gas cost:", web3.fromWei(result * gasPrice, 'ether'), ' ether');
+        console.log("Gas cost:", 300 * web3.fromWei(result * gasPrice, 'ether'), ' €');
+        return inst.recoverAddr.call(sha, sig.v, sig.r, sig.s)
       }).then(cb).catch(err => {console.log('got error:', err)})
     }
 
