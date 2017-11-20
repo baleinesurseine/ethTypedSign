@@ -16,6 +16,15 @@ contract Channels {
     uint validUntil;
     bool valid;
   }
+  
+  struct CompensationChannel {
+    address part1;
+    address part2;
+    uint256 value1;
+    uint256 value2;
+    uint validUntil;
+    bool valid;
+  }
 
   // Channels uses asynchronous withdrawing for the recipients.
   struct PaymentWithdraw {
@@ -58,6 +67,15 @@ contract Channels {
     LogNewChannel(msg.sender, channel, now + duration * 1 days);
     LogDeposit(msg.sender, channel, msg.value);
   }
+  
+  function createCompensation(unit duration, address counterpart) public payable {
+    bytes32 compensation = keccak256(id++, owner, msg.sender);
+    compensations[compensation] = CompensationChannel(msg.sender, counterpart, msg.value, 0, now + duration * 1 days, true);
+    deposits += msg.value;
+    LogNewCompensation(msg.sender, counterpart, compensation, now + duration * 1 days);
+    LogDepositComp(msg.sender, compensation, msg.value);
+  }
+  
 
   function getHash(bytes32 channel, address recipient, uint value) private pure returns(bytes32) {
     var h1 = keccak256('string Order', 'bytes32 Channel', 'address To', 'uint Amount');
@@ -95,6 +113,20 @@ contract Channels {
       deposits += msg.value;
       LogDeposit(msg.sender, channel, ch.value);
     }
+    
+    function depositComp(bytes32 compensation) public payable {
+    CompensationChannel memory ch = compensations[compensation];
+    if (ch.part1 == msg.sender) {
+      ch.value1 += msg.value;
+      deposits += msg.value;
+      LogDepositComp(msg.sender, compensation, msg.value);
+    }
+    if (ch.part2 == msg.sender) {
+      ch.value2 += msg.value;
+      deposits += msg.value;
+      LogDepositComp(msg.sender, compensation, msg.value);
+    }
+   }
 
     function recipientReclaim(bytes32 channel) public {
       PaymentWithdraw memory withdraw = withdraws[channel];
