@@ -55,7 +55,7 @@ contract Channels {
   // Only the sender can create a channel, by sending ether. Upon creation, the receiver is unknown
   function createChannel(uint duration, address recipient) public payable {
     require(recipient != address(0));
-    bytes32 channel = keccak256(id++, owner, msg.sender);
+    bytes32 channel = keccak256(id++, owner, msg.sender, recipient);
     channels[channel] = PaymentChannel(msg.sender, recipient, msg.value, now + duration * 1 days, true);
     deposits += msg.value;
     LogNewChannel(msg.sender, recipient, channel, now + duration * 1 days);
