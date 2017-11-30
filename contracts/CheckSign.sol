@@ -31,6 +31,7 @@ contract CheckSign {
 
   function hashTypedDb(uint value, string mess) internal pure returns (bytes32) {
     //var h1 = keccak256("string Message", "uint Amount");
+    // web3.sha3(web3.toHex("string Message").slice(2) + web3.toHex("uint Amount").slice(2), {encoding:"hex"});
     var h2 = keccak256(mess, value);
     //return keccak256(h1, h2);
     return keccak256(0xf00e8d27afc037c5911f30fcfc5774e3a9910b51ca7483071b1bea584c51e4b0, h2);
