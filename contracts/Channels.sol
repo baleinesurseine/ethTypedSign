@@ -12,10 +12,15 @@ contract Channels {
 
   struct PaymentChannel {
     address owner;
+    address recipient;
     uint256 value;
     uint validUntil;
     bool valid;
   }
+<<<<<<< HEAD
+=======
+
+>>>>>>> c9d678f14bf21daa407e93c1d64b0bad63c7c977
 
   // Channels uses asynchronous withdrawing for the recipients.
   struct PaymentWithdraw {
@@ -27,7 +32,7 @@ contract Channels {
   mapping(bytes32 => PaymentWithdraw) public withdraws;
   uint id;
 
-  event LogNewChannel(address indexed owner, bytes32 indexed channel, uint validUntil);
+  event LogNewChannel(address indexed owner, address indexed recipient, bytes32 indexed channel, uint validUntil);
   event LogDeposit(address indexed owner, bytes32 indexed channel, uint value);
   event LogClaim(address indexed who, bytes32 indexed channel, uint value);
   event LogReclaim(bytes32 indexed channel);
@@ -51,22 +56,32 @@ contract Channels {
     require(owner.send(this.balance - deposits));
   }
   // Only the sender can create a channel, by sending ether. Upon creation, the receiver is unknown
-  function createChannel(uint duration) public payable {
-    bytes32 channel = keccak256(id++, owner, msg.sender);
-    channels[channel] = PaymentChannel(msg.sender, msg.value, now + duration * 1 days, true);
+  function createChannel(uint duration, address recipient) public payable {
+    require(recipient != address(0));
+    bytes32 channel = keccak256(id++, owner, msg.sender, recipient);
+    channels[channel] = PaymentChannel(msg.sender, recipient, msg.value, now + duration * 1 days, true);
     deposits += msg.value;
-    LogNewChannel(msg.sender, channel, now + duration * 1 days);
+    LogNewChannel(msg.sender, recipient, channel, now + duration * 1 days);
     LogDeposit(msg.sender, channel, msg.value);
   }
+<<<<<<< HEAD
 
   function getHash(bytes32 channel, address recipient, uint value) private pure returns(bytes32) {
     var h1 = keccak256('string Order', 'bytes32 Channel', 'address To', 'uint Amount');
     // var h1 = 0xe9485e119b2dbdba8b62c219b4428200dd31f04706a5d0b5a68f5acd772309e7;
+=======
+
+
+  function getHash(bytes32 channel, address recipient, uint value) private pure returns(bytes32) {
+    var h1 = keccak256('string Order', 'bytes32 Channel', 'address To', 'uint Amount');
+    // var h1 = 0xe9485e119b2dbdba8b62c219b4428200dd31f04706a5d0b5a68f5acd772309e7
+>>>>>>> c9d678f14bf21daa407e93c1d64b0bad63c7c977
     var h2 = keccak256('Transfer amount', channel, recipient, value);
     return keccak256(h1, h2);
   }
 
   function verify(bytes32 channel, address recipient, uint value, uint8 v, bytes32 r, bytes32 s) constant public returns(bool) {
+    require(recipient != address(0));
     PaymentChannel memory ch = channels[channel];
     return ch.valid && ch.validUntil >= now && ch.owner == ecrecover(getHash(channel, recipient, value), v, r, s);
   }
@@ -75,6 +90,8 @@ contract Channels {
     address recipient = msg.sender;
     require(verify(channel, recipient, value, v, r, s));
     PaymentChannel memory ch = channels[channel];
+    require(recipient == ch.recipient);
+
     uint256 claimable = 0;
 
     if (value > ch.value) {
@@ -92,6 +109,7 @@ contract Channels {
     function deposit(bytes32 channel) public payable {
       require(isValidChannel(channel));
       PaymentChannel memory ch = channels[channel];
+      require(ch.owner == msg.sender);
       ch.value += msg.value;
       deposits += msg.value;
       LogDeposit(msg.sender, channel, ch.value);
