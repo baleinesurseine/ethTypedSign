@@ -17,10 +17,7 @@ contract Channels {
     uint validUntil;
     bool valid;
   }
-<<<<<<< HEAD
-=======
 
->>>>>>> c9d678f14bf21daa407e93c1d64b0bad63c7c977
 
   // Channels uses asynchronous withdrawing for the recipients.
   struct PaymentWithdraw {
@@ -64,18 +61,11 @@ contract Channels {
     LogNewChannel(msg.sender, recipient, channel, now + duration * 1 days);
     LogDeposit(msg.sender, channel, msg.value);
   }
-<<<<<<< HEAD
-
-  function getHash(bytes32 channel, address recipient, uint value) private pure returns(bytes32) {
-    var h1 = keccak256('string Order', 'bytes32 Channel', 'address To', 'uint Amount');
-    // var h1 = 0xe9485e119b2dbdba8b62c219b4428200dd31f04706a5d0b5a68f5acd772309e7;
-=======
 
 
   function getHash(bytes32 channel, address recipient, uint value) private pure returns(bytes32) {
     var h1 = keccak256('string Order', 'bytes32 Channel', 'address To', 'uint Amount');
     // var h1 = 0xe9485e119b2dbdba8b62c219b4428200dd31f04706a5d0b5a68f5acd772309e7
->>>>>>> c9d678f14bf21daa407e93c1d64b0bad63c7c977
     var h2 = keccak256('Transfer amount', channel, recipient, value);
     return keccak256(h1, h2);
   }
